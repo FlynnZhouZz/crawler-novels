@@ -4,6 +4,7 @@
   "main": "crawler.js",
   "scripts": {
     "start": "node crawler.js",
+    "clean": "node clean.js",
     "get-cookie": "node get-cookie.js"
   },
   "license": "MIT",
