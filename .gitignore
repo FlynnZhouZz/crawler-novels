@@ -1,0 +1,42 @@
+# 依赖
+node_modules/
+
+# 爬取输出（用户生成的小说章节）
+html/
+
+# 浏览器持久化用户数据（playwright 生成的 Edge 缓存/历史/cookies，含敏感信息）
+.browser-data/
+
+# 环境配置（包含真实 cookie 等敏感信息）
+.env
+.env.local
+.env.*.local
+
+# 但保留 .env.example 供团队参考
+!.env.example
+
+# 日志
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 临时测试文件
+test-*.html
+test-*.js
+_test-*.js
+_test-*.bat
+debug-page*.html
