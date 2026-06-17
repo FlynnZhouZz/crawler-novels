@@ -95,6 +95,28 @@ function extractContent(html) {
 }
 
 /**
+ * 递归查找目录下所有 HTML 文件
+ * @param {string} dir
+ * @param {string} baseDir
+ * @returns {Array<{inputPath: string, relativePath: string}>}
+ */
+function findHtmlFiles(dir, baseDir) {
+    const results = [];
+    const entries = fs.readdirSync(dir);
+    for (const entry of entries) {
+        const fullPath = path.join(dir, entry);
+        const stat = fs.statSync(fullPath);
+        if (stat.isDirectory()) {
+            results.push(...findHtmlFiles(fullPath, baseDir));
+        } else if (entry.endsWith('.html')) {
+            const relativePath = path.relative(baseDir, fullPath);
+            results.push({ inputPath: fullPath, relativePath });
+        }
+    }
+    return results;
+}
+
+/**
  * 处理单个小说目录
  * @param {string} novelName
  */
@@ -111,23 +133,28 @@ function processNovel(novelName) {
         fs.mkdirSync(novelOutputDir, { recursive: true });
     }
 
-    const files = fs.readdirSync(novelHtmlDir).filter((f) => f.endsWith('.html'));
+    const files = findHtmlFiles(novelHtmlDir, novelHtmlDir);
     console.log(`处理小说: ${novelName}，共 ${files.length} 章`);
 
     let successCount = 0;
-    for (const file of files) {
-        const inputPath = path.join(novelHtmlDir, file);
+    for (const { inputPath, relativePath } of files) {
         const html = fs.readFileSync(inputPath, 'utf-8');
         const { title, content } = extractContent(html);
 
         if (!content) {
-            console.warn(`  跳过空内容: ${file}`);
+            console.warn(`  跳过空内容: ${relativePath}`);
             continue;
         }
 
-        // 输出文件名与输入文件同名，但扩展名为 .txt
-        const outputFileName = file.replace(/\.html$/, '.txt');
-        const outputPath = path.join(novelOutputDir, outputFileName);
+        // 输出文件名与输入文件同名，但扩展名为 .txt，保持目录结构
+        const outputRelativePath = relativePath.replace(/\.html$/, '.txt');
+        const outputPath = path.join(novelOutputDir, outputRelativePath);
+
+        // 确保输出目录存在
+        const outputDir = path.dirname(outputPath);
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir, { recursive: true });
+        }
 
         // 写入 TXT 文件，格式：标题 + 空行 + 正文
         const txtContent = `${title}\n\n${content}\n`;

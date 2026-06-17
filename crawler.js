@@ -90,8 +90,13 @@ function extractNovelName(html) {
 
 /**
  * 抓取并保存单个章节，返回下一页 URL 或 null
+ * @param {string} url
+ * @param {string} novelName
+ * @param {number} index
+ * @param {{ currentVolume: string }} state  - 跨章节状态（当前卷名）
+ * @returns {Promise<string | null>}
  */
-async function crawlChapter(url, novelName, index) {
+async function crawlChapter(url, novelName, index, state) {
     let solution = null;
     let lastErr = null;
     for (let i = 0; i < MAX_RETRY; i++) {
@@ -121,7 +126,7 @@ async function crawlChapter(url, novelName, index) {
         return null;
     }
 
-    // 识别大标题（<h2>）和副标题（<h2 class="h2">）
+    // 识别大标题（<h2>，卷名）和副标题（<h2 class="h2">，章节名）
     let mainTitle = '';
     let subTitle = '';
     contentDiv.find('h2').each((_, el) => {
@@ -135,11 +140,16 @@ async function crawlChapter(url, novelName, index) {
         }
     });
 
-    // 文件名优先用副标题
-    const fileBaseName = subTitle || mainTitle || `chapter_${index}`;
+    // 大标题作为卷目录名，若本章没有大标题则沿用上一章的卷名
+    const volumeName = mainTitle || state.currentVolume || '未知卷';
+    state.currentVolume = volumeName;
+
+    // 文件名用副标题（章节名）
+    const fileBaseName = subTitle || `chapter_${index}`;
     const novelDir = path.join(OUTPUT_DIR, sanitizeFilename(novelName));
+    const volumeDir = path.join(novelDir, sanitizeFilename(volumeName));
     const fileName = `${String(index).padStart(4, '0')}_${sanitizeFilename(fileBaseName)}.html`;
-    const filePath = path.join(novelDir, fileName);
+    const filePath = path.join(volumeDir, fileName);
 
     // 包装为完整 HTML 文件，方便直接打开阅读
     const fullHtml = `<!DOCTYPE html>
@@ -154,8 +164,8 @@ ${contentHtml}
 </html>
 `;
 
-    if (!fs.existsSync(novelDir)) {
-        fs.mkdirSync(novelDir, { recursive: true });
+    if (!fs.existsSync(volumeDir)) {
+        fs.mkdirSync(volumeDir, { recursive: true });
     }
     fs.writeFileSync(filePath, fullHtml, 'utf-8');
     console.log(`[${index}] 已保存: ${filePath}`);
@@ -205,9 +215,10 @@ async function main() {
 
     let currentUrl = START_URL;
     let index = 1;
+    const state = { currentVolume: '' };
     while (currentUrl) {
         try {
-            const nextUrl = await crawlChapter(currentUrl, novelName, index);
+            const nextUrl = await crawlChapter(currentUrl, novelName, index, state);
             if (!nextUrl) break;
             currentUrl = nextUrl;
             index++;
