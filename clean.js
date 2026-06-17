@@ -80,8 +80,9 @@ function extractContent(html) {
     // 提取纯文本
     let contentText = html.trim();
 
-    // 清洗网站水印：URL 链接、"-图-书"、"和-图-书" 等
+    // 清洗网站水印：URL 链接、"-图-书"、"和-图-书"、"hetushu.com.com" 等
     contentText = contentText.replace(/https?:\/\/[^\s，。！？、；：""''（）\n]+/g, '');
+    contentText = contentText.replace(/[\w-]+\.com(?:\.\w+)?/g, '');
     contentText = contentText.replace(/-?图-?书/g, '');
     contentText = contentText.replace(/和-?图-?书/g, '');
     contentText = contentText.replace(/和杀阵/g, '杀阵');
