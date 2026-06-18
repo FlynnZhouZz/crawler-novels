@@ -1,0 +1,23 @@
+{
+    "sites": {
+        "example.com": {
+            "novelName": {
+                "selector": "meta[property='og:novel:book_name']",
+                "attribute": "content"
+            },
+            "content": {
+                "selector": "#chaptercontent"
+            },
+            "titles": {
+                "mainTitle": "h1",
+                "subTitle": "h2.chapter-title"
+            },
+            "nextPage": {
+                "selector": "a.next",
+                "attribute": "href"
+            },
+            "watermarks": ["example\\.com", "广告词"],
+            "encoding": "utf-8"
+        }
+    }
+}

@@ -3,9 +3,10 @@
     "version": "1.0.0",
     "main": "crawler.js",
     "scripts": {
-        "start": "node crawler.js",
-        "clean": "node clean.js",
-        "get-cookie": "node get-cookie.js"
+        "start": "node src/crawler.js",
+        "clean": "node src/clean.js",
+        "detect": "node src/crawler.js --detect",
+        "get-cookie": "node src/get-cookie.js"
     },
     "license": "MIT",
     "dependencies": {

@@ -4,9 +4,8 @@
  */
 const fs = require('fs');
 const path = require('path');
-const readline = require('readline');
 
-const ENV_PATH = path.join(__dirname, '.env');
+const ENV_PATH = path.join(__dirname, '..', '.env');
 const GUIDE = `
 ============================================================
 如何获取 Cloudflare cookie
@@ -34,6 +33,7 @@ const GUIDE = `
 `;
 
 async function prompt() {
+    const readline = require('readline');
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
     return new Promise((resolve) => {
         rl.question(GUIDE, (answer) => {
@@ -44,7 +44,7 @@ async function prompt() {
 }
 
 function writeEnv(cookie) {
-    const envExamplePath = path.join(__dirname, '.env.example');
+    const envExamplePath = path.join(__dirname, '..', '.env.example');
     if (!fs.existsSync(envExamplePath)) {
         fs.writeFileSync(envExamplePath, '# 从浏览器 DevTools -> Network -> Cookie 整行复制\nCF_COOKIE=\n', 'utf-8');
     }

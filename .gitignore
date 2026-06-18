@@ -16,6 +16,9 @@ content/
 # 但保留 .env.example 供团队参考
 !.env.example
 
+# 探测结果缓存
+.adapter-cache.json
+
 # 日志
 *.log
 npm-debug.log*
