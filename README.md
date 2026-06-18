@@ -100,18 +100,17 @@ yarn clean
 项目使用**适配器模式**兼容不同小说网站：
 
 ```
-crawler.js（通用爬取引擎，不依赖任何特定站点结构）
+site-config.json（统一配置入口，所有站点适配在此管理）
     │
-    ├── HetushuAdapter     — 和图书专用适配器
-    ├── AutoDetectAdapter  — 自动探测适配器（兜底）
-    └── site-config.json   — 用户自定义配置（覆盖自动探测）
+    ├── hetushu.com       — 和图书配置
+    ├── example.com       — 其他站点配置
+    └── AutoDetectAdapter — 自动探测适配器（未配置的站点兜底）
 ```
 
 ### 适配器选择流程
 
-1. **site-config.json** — 如果配置了目标域名的选择器，优先使用
-2. **已知适配器** — hetushu.com 等预置站点使用专用适配器
-3. **自动探测** — 未知站点通过启发式规则分析页面结构，结果缓存到 `.adapter-cache.json`
+1. **site-config.json** — 查找当前域名是否有配置，有则直接使用
+2. **自动探测** — 未配置的未知站点，通过启发式规则分析页面结构，结果缓存到 `.adapter-cache.json`
 
 ### 自动探测策略
 

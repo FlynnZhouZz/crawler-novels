@@ -25,7 +25,6 @@ const fs = require('fs');
 const path = require('path');
 
 // 站点适配器
-const HetushuAdapter = require('./adapters/HetushuAdapter');
 const AutoDetectAdapter = require('./adapters/AutoDetectAdapter');
 
 // ==================== 常量 ====================
@@ -38,9 +37,6 @@ const ADAPTER_CACHE_PATH = path.join(__dirname, '..', '.adapter-cache.json');
 
 // 默认起始 URL（未传参时的兜底）
 const DEFAULT_START_URL = 'https://www.hetushu.com/book/10319/7209353.html';
-
-// 已知适配器列表（按优先级排列）
-const KNOWN_ADAPTERS = [new HetushuAdapter()];
 
 // ==================== 工具函数 ====================
 
@@ -145,8 +141,22 @@ function createConfigAdapter(domain, siteConfig) {
     adapter.extractNovelName = ($) => {
         if (cfg.novelName) {
             const el = $(cfg.novelName.selector);
-            const val = cfg.novelName.attribute ? el.attr(cfg.novelName.attribute) : el.text();
-            if (val) return val.trim();
+            let val = cfg.novelName.attribute ? el.attr(cfg.novelName.attribute) : el.text();
+            if (val) {
+                val = val.trim();
+                // 支持按分隔符截取（如 title="章节名 - 小说名 - 站点" 取索引 1）
+                if (cfg.novelName.split) {
+                    const parts = val.split(new RegExp(cfg.novelName.split, 'g'));
+                    if (typeof cfg.novelName.part === 'number') {
+                        val = (parts[cfg.novelName.part] || '').trim();
+                    } else if (cfg.novelName.part === 'last') {
+                        val = parts[parts.length - 1].trim();
+                    } else if (cfg.novelName.part === 'first' || cfg.novelName.part === undefined) {
+                        val = parts[0].trim();
+                    }
+                }
+                return val;
+            }
         }
         return '未知小说';
     };
@@ -225,7 +235,7 @@ function resolveUrl(href, currentUrl) {
 
 /**
  * 选择适配器
- * 流程：配置 > 已知适配器 > 自动探测
+ * 流程：site-config.json > 自动探测
  */
 function selectAdapter(url, siteConfig) {
     let domain = '';
@@ -236,21 +246,23 @@ function selectAdapter(url, siteConfig) {
     }
 
     // 1. 检查 site-config.json 是否有该站点的配置
-    const configAdapter = createConfigAdapter(domain, siteConfig);
+    let configAdapter = createConfigAdapter(domain, siteConfig);
+    if (!configAdapter && domain.startsWith('www.')) {
+        // 降级尝试不带 www. 前缀的域名
+        configAdapter = createConfigAdapter(domain.slice(4), siteConfig);
+    }
+    if (!configAdapter) {
+        // 反向：用带 www. 的域名再试一次
+        if (!domain.startsWith('www.') && !domain.startsWith('localhost')) {
+            configAdapter = createConfigAdapter('www.' + domain, siteConfig);
+        }
+    }
     if (configAdapter) {
         console.log(`使用配置适配器: ${domain}`);
         return configAdapter;
     }
 
-    // 2. 尝试已知适配器
-    for (const adapter of KNOWN_ADAPTERS) {
-        if (adapter.match(url)) {
-            console.log(`使用已知适配器: ${adapter.constructor.name}`);
-            return adapter;
-        }
-    }
-
-    // 3. 自动探测（兜底）
+    // 2. 自动探测（兜底）
     console.log('使用自动探测适配器');
     const autoAdapter = new AutoDetectAdapter();
 
@@ -530,7 +542,7 @@ async function main() {
     const novelName = adapter.extractNovelName(cheerioFirst);
     console.log(`小说名: ${novelName}`);
 
-    // 如果是 --detect 模式但使用已知适配器，已经打印了信息，直接返回
+    // 如果是 --detect 模式但使用配置适配器，已经打印了信息，直接返回
     if (args.detect && !(adapter instanceof AutoDetectAdapter)) {
         console.log('\n--detect 模式，分析完成，不执行爬取。');
         return;

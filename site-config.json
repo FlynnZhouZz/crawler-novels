@@ -1,5 +1,31 @@
 {
     "sites": {
+        "www.hetushu.com": {
+            "novelName": {
+                "selector": "title",
+                "split": "_",
+                "part": 0
+            },
+            "content": {
+                "selector": "#content"
+            },
+            "titles": {
+                "mainTitle": "h2",
+                "subTitle": "h2.h2"
+            },
+            "nextPage": {
+                "selector": "a#next",
+                "attribute": "href"
+            },
+            "watermarks": [
+                "https?://[^\\s，。！？、；：\"\"''（）\\n]+",
+                "[\\w-]+\\.com(?:\\.\\w+)?",
+                "-?图-?书",
+                "和-?图-?书",
+                "和杀阵"
+            ],
+            "encoding": "utf-8"
+        },
         "example.com": {
             "novelName": {
                 "selector": "meta[property='og:novel:book_name']",
