@@ -134,8 +134,30 @@ function processNovel(novelName) {
         fs.mkdirSync(novelOutputDir, { recursive: true });
     }
 
-    const files = findHtmlFiles(novelHtmlDir, novelHtmlDir);
-    console.log(`处理小说: ${novelName}，共 ${files.length} 章`);
+    const indexPath = path.join(novelHtmlDir, 'index.json');
+    let files;
+
+    if (fs.existsSync(indexPath)) {
+        // 有索引文件，按索引顺序处理
+        const index = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
+        files = [];
+        for (const volume of index.volumes) {
+            for (const chapter of volume.chapters) {
+                const inputPath = path.join(novelHtmlDir, sanitizeFilename(volume.name), chapter.fileName);
+                if (!fs.existsSync(inputPath)) {
+                    console.warn(`  索引引用文件不存在: ${chapter.fileName}（卷: ${volume.name}）`);
+                    continue;
+                }
+                const relativePath = path.join(sanitizeFilename(volume.name), chapter.fileName);
+                files.push({ inputPath, relativePath });
+            }
+        }
+        console.log(`处理小说: ${novelName}，按索引顺序共 ${files.length} 章（${index.volumes.length} 卷）`);
+    } else {
+        // 无索引文件，回退到递归查找
+        files = findHtmlFiles(novelHtmlDir, novelHtmlDir);
+        console.log(`处理小说: ${novelName}，共 ${files.length} 章（无索引，按文件系统顺序）`);
+    }
 
     let successCount = 0;
     for (const { inputPath, relativePath } of files) {
