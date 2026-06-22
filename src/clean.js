@@ -1,7 +1,7 @@
 /**
  * 数据清洗脚本
- * 将 html/ 目录下的章节 HTML 文件解析为纯文本 TXT 文件
- * 提取标题和正文内容，保存到 content/ 目录
+ * 将 outputs/html/ 目录下的章节 HTML 文件解析为纯文本 TXT 文件
+ * 提取标题和正文内容，保存到 outputs/content/ 目录
  *
  * 支持多站点水印规则：
  *   - 读取 .adapter-cache.json 中的站点缓存规则
@@ -16,8 +16,8 @@ const cheerio = require('cheerio');
 const fs = require('fs');
 const path = require('path');
 
-const HTML_DIR = path.join(__dirname, '..', 'html');
-const OUTPUT_DIR = path.join(__dirname, '..', 'content');
+const HTML_DIR = path.join(__dirname, '..', process.env.BASE_OUTPUT_DIR || 'outputs', 'html');
+const OUTPUT_DIR = path.join(__dirname, '..', process.env.BASE_OUTPUT_DIR || 'outputs', 'content');
 const ADAPTER_CACHE_PATH = path.join(__dirname, '..', '.adapter-cache.json');
 const SITE_CONFIG_PATH = path.join(__dirname, '..', 'site-config.json');
 
@@ -225,13 +225,17 @@ function processNovel(novelName, domainPatterns) {
         const index = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
         files = [];
         for (const volume of index.volumes) {
+            // 卷名为空说明没有卷结构，文件直接在小说目录下
+            const volumeDir = volume.name ? sanitizeFilename(volume.name) : '';
             for (const chapter of volume.chapters) {
-                const inputPath = path.join(novelHtmlDir, sanitizeFilename(volume.name), chapter.fileName);
+                const inputPath = volumeDir
+                    ? path.join(novelHtmlDir, volumeDir, chapter.fileName)
+                    : path.join(novelHtmlDir, chapter.fileName);
                 if (!fs.existsSync(inputPath)) {
-                    console.warn(`  索引引用文件不存在: ${chapter.fileName}（卷: ${volume.name}）`);
+                    console.warn(`  索引引用文件不存在: ${chapter.fileName}（卷: ${volume.name || '无'}）`);
                     continue;
                 }
-                const relativePath = path.join(sanitizeFilename(volume.name), chapter.fileName);
+                const relativePath = volumeDir ? path.join(volumeDir, chapter.fileName) : chapter.fileName;
                 files.push({ inputPath, relativePath });
             }
         }
@@ -273,7 +277,7 @@ function main() {
     console.log('---');
 
     if (!fs.existsSync(HTML_DIR)) {
-        console.error('未找到 html/ 目录，请先运行 `yarn start` 爬取小说');
+        console.error(`未找到 ${HTML_DIR} 目录，请先运行 \`yarn start\` 爬取小说`);
         process.exit(1);
     }
 
@@ -283,7 +287,7 @@ function main() {
     });
 
     if (novels.length === 0) {
-        console.error('html/ 目录下没有找到小说目录');
+        console.error(`${HTML_DIR} 目录下没有找到小说目录`);
         process.exit(1);
     }
 

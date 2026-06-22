@@ -29,7 +29,7 @@ const AutoDetectAdapter = require('./adapters/AutoDetectAdapter');
 
 // ==================== 常量 ====================
 
-const OUTPUT_DIR = path.join(__dirname, '..', 'html');
+const OUTPUT_DIR = path.join(__dirname, '..', process.env.BASE_OUTPUT_DIR || 'outputs', 'html');
 const FLARESOLVERR_URL = process.env.FLARESOLVERR_URL || 'http://localhost:8191/v1';
 const REQUEST_DELAY = 1000;
 const MAX_RETRY = 3;
@@ -342,20 +342,31 @@ async function crawlChapter(url, novelName, index, state, adapter) {
     // 提取标题
     const { mainTitle, subTitle } = adapter.extractTitles($, contentDiv);
 
-    // 大标题作为卷目录名
-    const volumeName = mainTitle || state.currentVolume || '未知卷';
+    // 判断是否有卷结构：大标题包含"第X章"说明是章节名，不是卷名
+    const hasVolumeStructure = mainTitle && !/第\s*\d+\s*章/.test(mainTitle);
+
+    let volumeName = '';
+    if (hasVolumeStructure) {
+        volumeName = mainTitle || state.currentVolume || '未知卷';
+    } else {
+        // 没有卷结构时，volumeName 为空，文件直接保存到小说目录
+        volumeName = '';
+    }
 
     // 新卷首次出现时注册
-    if (!state.volumeMap[volumeName]) {
+    if (volumeName && !state.volumeMap[volumeName]) {
         state.volumeMap[volumeName] = { name: volumeName, chapters: [] };
         state.volumeOrder.push(volumeName);
     }
-    state.currentVolume = volumeName;
+    if (volumeName) {
+        state.currentVolume = volumeName;
+    }
 
     // 文件名用副标题（章节名），不带序号前缀
     const fileBaseName = subTitle || `chapter_${index}`;
     const novelDir = path.join(OUTPUT_DIR, sanitizeFilename(novelName));
-    const volumeDir = path.join(novelDir, sanitizeFilename(volumeName));
+    // 有卷结构时才创建子目录
+    const volumeDir = volumeName ? path.join(novelDir, sanitizeFilename(volumeName)) : novelDir;
     const fileName = `${sanitizeFilename(fileBaseName)}.html`;
     const filePath = path.join(volumeDir, fileName);
 

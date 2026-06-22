@@ -10,7 +10,7 @@
                 "selector": "#content"
             },
             "titles": {
-                "mainTitle": "h2",
+                "mainTitle": "h2:not(.h2)",
                 "subTitle": "h2.h2"
             },
             "nextPage": {

@@ -174,31 +174,31 @@ site-config.json（统一配置入口，所有站点适配在此管理）
 ## 输出结构
 
 ```
-html/
-└── 吞噬星空2：起源大陆/
-    ├── index.json                        # 索引文件（卷顺序、章节顺序、MD5 校验）
-    ├── 第七卷 九河圣界/
-    │   ├── 第九章 归来.html
-    │   ├── 第十章 采购.html
-    │   └── ...
-    ├── 第八卷 浑源行者/
-    │   ├── 第一章 新世界.html
-    │   └── ...
-    └── ...
-content/
-└── 吞噬星空2：起源大陆/
-    ├── 第七卷 九河圣界/
-    │   ├── 第九章 归来.txt
-    │   ├── 第十章 采购.txt
-    │   └── ...
-    └── ...
+outputs/
+├── html/
+│   └── 吞噬星空2：起源大陆/
+│       ├── index.json                        # 索引文件（卷顺序、章节顺序、MD5 校验）
+│       ├── 第七卷 九河圣界/
+│       │   ├── 第九章 归来.html
+│       │   ├── 第十章 采购.html
+│       │   └── ...
+│       └── ...
+└── content/
+    └── 吞噬星空2：起源大陆/
+        ├── 第七卷 九河圣界/
+        │   ├── 第九章 归来.txt
+        │   ├── 第十章 采购.txt
+        │   └── ...
+        └── ...
 ```
 
 - `<h2>` 大标题作为卷目录名
 - `<h2 class="h2">` 小标题作为文件名
 - 若某章没有大标题，沿用上一章的卷名
+- 若大标题包含"第X章"，说明没有卷结构，文件直接放在小说目录下
 - **文件名不带序号前缀**，顺序由 `index.json` 维护
 - `index.json` 记录每章的 MD5 哈希值，用于文件完整性校验
+- 可通过 `.env` 中的 `BASE_OUTPUT_DIR` 自定义输出基目录（默认 `outputs`）
 
 ## 数据清洗
 
@@ -213,7 +213,7 @@ yarn clean
 - 保留段落结构（`<div>`、`<p>` 转为换行）
 - 移除网站水印（URL、域名、站点特有广告词等）
 - 支持多站点水印规则（读取 `.adapter-cache.json` 和 `site-config.json`）
-- 输出到 `content/{小说名}/` 目录，保持与 HTML 相同的卷目录结构
+- 输出到 `outputs/content/{小说名}/` 目录，保持与 HTML 相同的卷目录结构
 
 ## 项目结构
 
@@ -225,23 +225,23 @@ crawler-novels/
 │   ├── get-cookie.js            # Cookie 获取工具
 │   └── adapters/                # 站点适配器
 │       ├── SiteAdapter.js       #   基类
-│       ├── HetushuAdapter.js    #   和图书适配器
 │       └── AutoDetectAdapter.js #   自动探测适配器
-├── site-config.json             # 用户自定义配置（可选）
+├── site-config.json             # 站点适配配置（统一管理所有站点选择器规则）
 ├── .adapter-cache.json          # 探测结果缓存（自动生成，已 gitignore）
 ├── package.json
 ├── .env
 ├── .gitignore
 ├── jsconfig.json
-├── html/                        # 爬取输出
-│   └── {小说名}/
-│       ├── index.json
-│       └── {卷名}/
-│           └── {章节名}.html
-├── content/                     # 清洗输出
-│   └── {小说名}/
-│       └── {卷名}/
-│           └── {章节名}.txt
+├── outputs/                     # 输出目录（可通过 BASE_OUTPUT_DIR 自定义）
+│   ├── html/                    #   爬取输出
+│   │   └── {小说名}/
+│   │       ├── index.json
+│   │       └── {卷名}/
+│   │           └── {章节名}.html
+│   └── content/                 #   清洗输出
+│       └── {小说名}/
+│           └── {卷名}/
+│               └── {章节名}.txt
 └── docs/
     └── 001-通用小说爬虫架构设计.md
 ```
