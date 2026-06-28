@@ -36,7 +36,7 @@ const MAX_RETRY = 3;
 const ADAPTER_CACHE_PATH = path.join(__dirname, '..', '.adapter-cache.json');
 
 // 默认起始 URL（未传参时的兜底）
-const DEFAULT_START_URL = 'https://www.hetushu.com/book/10319/7209353.html';
+const DEFAULT_START_URL = 'https://www.hetushu.com/book/10319/7209073.html';
 
 // ==================== 工具函数 ====================
 
